@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import lmdb
+import os
 import pandas
 import sys
 import argparse
@@ -28,6 +29,7 @@ log.setLevel(logging.INFO)
 def create_video_db(
     list_file,
     output_file,
+    root_path=None,
     use_list=0,
     use_video_id=0,
     use_start_frame=0,
@@ -71,6 +73,14 @@ def create_video_db(
             list = list.sample(frac=1)
             for _, row in list.iterrows():
                 file_name = row["org_video"]
+                
+                if root_path:
+                    file_name = os.path.join(
+                        root_path,
+                        os.path.basename(os.path.dirname(file_name)),
+                        os.path.basename(file_name)
+                    )
+
                 label = row["label"]
 
                 if not use_list:
@@ -120,6 +130,8 @@ def main():
                         help="Path to list file")
     parser.add_argument("--output_file", type=str, default=None,
                         help="Path to output lmdb data")
+    parser.add_argument("--root_path", type=str, default=None,
+                        help="Path to lmdb data root. If provided, parents dir of the files in the list will be replaced by this.")
     parser.add_argument("--use_list", type=int, default=0,
                         help="0: write video encoded data to lmdb, " +
                         "1: write only full path to local video files")
@@ -136,6 +148,7 @@ def main():
     create_video_db(
         args.list_file,
         args.output_file,
+        args.root_path,
         args.use_list,
         args.use_video_id,
         args.use_start_frame,
